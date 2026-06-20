@@ -196,6 +196,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
 .exgrip svg{width:20px;height:20px}
 .exblock.dragging{position:relative;z-index:50;opacity:.96;box-shadow:0 16px 36px rgba(0,0,0,.45);cursor:grabbing}
 .dropline{height:3px;background:var(--acc);border-radius:3px;margin:4px 6px 16px}
+/* while reordering, collapse blocks to short header rows so they're easy to drag */
+.exlist.reordering .exblock{padding:12px 16px;margin-bottom:8px}
+.exlist.reordering .exblock .exhead{margin-bottom:0}
+.exlist.reordering .exblock .sethead,.exlist.reordering .exblock .setwrap,.exlist.reordering .exblock .setrow,.exlist.reordering .exblock .addset,.exlist.reordering .exblock .exnote{display:none}
 /* swipe-a-set-left-to-delete */
 .setwrap{position:relative;overflow:hidden}
 .setwrap .setdel{position:absolute;top:3px;right:0;bottom:3px;width:64px;display:flex;align-items:center;justify-content:center;background:var(--red);color:#fff;border:none;border-radius:10px;cursor:pointer}
@@ -2795,7 +2799,8 @@ function renderBanner(){
 }
 function renderOverlay(){
   var o=$('#overlay');
-  if(S.active&&woOpen){ o.innerHTML=overlayHtml(); o.classList.add('open'); }
+  var pb=o.querySelector('.ovbody'), sy=pb?pb.scrollTop:0;   /* keep scroll position across re-render */
+  if(S.active&&woOpen){ o.innerHTML=overlayHtml(); o.classList.add('open'); var nb=o.querySelector('.ovbody'); if(nb)nb.scrollTop=sy; }
   else { o.classList.remove('open'); if(!S.active)o.innerHTML=''; }
   renderBanner();
 }
@@ -2844,13 +2849,18 @@ function renderOverlay(){
   function startDrag(e,grip){
     var block=grip.closest('.exblock'), list=block&&block.parentNode;
     if(!block||!list)return;
-    dr={block:block,list:list,y0:e.clientY,oldIndex:[].slice.call(list.querySelectorAll('.exblock')).indexOf(block)};
+    var oldTop=block.getBoundingClientRect().top;
+    dr={block:block,list:list,body:block.closest('.ovbody'),y0:e.clientY,oldIndex:[].slice.call(list.querySelectorAll('.exblock')).indexOf(block)};
     dr.line=document.createElement('div'); dr.line.className='dropline';
-    block.classList.add('dragging'); closeSwipes(null); e.preventDefault();
+    block.classList.add('dragging'); list.classList.add('reordering'); closeSwipes(null);
+    dr.y0=e.clientY-(oldTop-block.getBoundingClientRect().top);   /* keep the row under the finger after collapse */
+    e.preventDefault();
   }
   function dragMove(e){
     e.preventDefault();
     dr.block.style.transform='translateY('+(e.clientY-dr.y0)+'px)';
+    if(dr.body){ var br=dr.body.getBoundingClientRect(), edge=72;   /* auto-scroll near the edges */
+      if(e.clientY<br.top+edge)dr.body.scrollTop-=14; else if(e.clientY>br.bottom-edge)dr.body.scrollTop+=14; }
     var py=e.clientY, placed=false, blocks=dr.list.querySelectorAll('.exblock');
     for(var k=0;k<blocks.length;k++){ var b=blocks[k]; if(b===dr.block)continue;
       var r=b.getBoundingClientRect();
