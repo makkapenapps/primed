@@ -378,6 +378,10 @@ label.f{display:block;font-size:12px;font-weight:700;color:var(--mut);margin:12p
 .cuerow{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line);font-size:14px;line-height:1.5}
 .cuerow:last-child{border-bottom:none}
 .cuenum{flex:none;width:22px;height:22px;border-radius:50%;background:var(--accSoft);color:var(--acc);font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;margin-top:1px}
+/* weekly recap */
+.recapstats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center}
+.recapstats b{display:block;font-size:18px;color:var(--acc)}
+.recapstats span{font-size:11px;color:var(--mut)}
 /* ============ responsive: tablet & desktop ============ */
 .tablbl,.navbrand,.navonly{display:none}
 #tabbar.navhide{display:none}
@@ -887,7 +891,7 @@ function planById(id){for(var i=0;i<PLANS.length;i++)if(PLANS[i].id===id)return 
 /* ================= state ================= */
 var KEY='ironlog.v1';   /* storage key kept across the Primed rebrand — renaming it would wipe existing installs */
 var S=load();
-function defaults(){return {name:'Athlete',bio:'',avatar:null,account:null,signedIn:false,stateUpdatedAt:0,wearable:null,purchased:false,trialStart:null,feedbackGiven:false,_bonusDays:0,onboarded:false,notifications:false,sex:'',dob:'',heightCm:null,level:'',goal:'',weekGoal:4,bodyLog:[],readiness:[],unit:'kg',theme:'dark',restDefault:90,customExercises:[],routines:[],workouts:[],active:null,sampleDismissed:false};}
+function defaults(){return {name:'Athlete',bio:'',avatar:null,account:null,signedIn:false,stateUpdatedAt:0,wearable:null,purchased:false,trialStart:null,feedbackGiven:false,_bonusDays:0,onboarded:false,notifications:false,sex:'',dob:'',heightCm:null,level:'',goal:'',weekGoal:4,bodyLog:[],readiness:[],unit:'kg',theme:'dark',restDefault:90,customExercises:[],routines:[],workouts:[],active:null,sampleDismissed:false,lastRecapWeek:''};}
 function load(){
   try{var raw=localStorage.getItem(KEY); if(!raw) return defaults();
     var d=JSON.parse(raw); var base=defaults();
@@ -1363,6 +1367,7 @@ function dashHomeHtml(){
   var h='<div class="scr dash">';
   h+='<div style="margin-bottom:18px"><div style="font-size:25px;font-weight:800;letter-spacing:-.5px">'+greet+', '+esc(S.name)+'</div><div class="sub" style="margin:3px 0 0">'+dn+', '+now.getDate()+' '+mn+' — here\'s where your training stands.</div></div>';
   var _tc=trialCard(); if(_tc)h+='<div style="margin-bottom:16px">'+_tc+'</div>';
+  var _rc=weeklyRecapCard(); if(_rc)h+='<div style="margin-bottom:16px">'+_rc+'</div>';
   if(S.active){
     h+='<div class="card tap" onclick="woOpen=true;render()" style="border-color:var(--green);margin-bottom:16px"><div class="row"><span class="qi" style="background:var(--greenSoft);color:var(--green)">'+icon('play')+'</span><div class="grow"><b>Workout in progress</b><div class="sub" style="margin:2px 0 0">'+esc(S.active.name)+' — tap to resume</div></div><span style="color:var(--green);font-weight:800" id="homeclock">'+fmtClock((Date.now()-new Date(S.active.start))/1000)+'</span></div></div>';
   }
@@ -1404,6 +1409,7 @@ function homeHtml(){
   var h='<div class="scr"><div class="row" style="margin-bottom:14px"><span onclick="setTab(\'profile\')" style="cursor:pointer">'+avatarHtml(46,18)+'</span>'+
     '<div class="grow"><div style="font-size:20px;font-weight:800">'+greet+', '+esc(S.name)+'</div><div class="sub" style="margin:1px 0 0">'+dn+', '+now.getDate()+' '+mn+'</div></div></div>';
   h+=trialCard();
+  h+=weeklyRecapCard();
   if(S.active){
     h+='<div class="card tap" onclick="woOpen=true;render()" style="border-color:var(--green)"><div class="row"><div class="grow"><b>Workout in progress</b><div class="sub" style="margin:2px 0 0">'+esc(S.active.name)+' — tap to resume</div></div><span style="color:var(--green);font-weight:800" id="homeclock">'+fmtClock((Date.now()-new Date(S.active.start))/1000)+'</span></div></div>';
   }
@@ -1965,6 +1971,23 @@ function trialCard(){
   }
   return '';
 }
+/* once-a-week celebratory recap of last week's training */
+function weeklyRecapCard(){
+  if(!S.signedIn)return '';
+  var thisMon=monday(new Date()).toISOString();
+  if(S.lastRecapWeek===thisMon)return '';
+  var lwStart=monday(new Date(Date.now()-7*864e5)), lwEnd=monday(new Date()), pwStart=monday(new Date(Date.now()-14*864e5));
+  var lw=S.workouts.filter(function(w){var d=new Date(w.start);return d>=lwStart&&d<lwEnd;});
+  if(!lw.length)return '';
+  var vol=0,prs=0,days={}; lw.forEach(function(w){vol+=w.volume||0;prs+=w.prCount||0;days[new Date(w.start).getDay()]=1;});
+  var pv=0; S.workouts.forEach(function(w){var d=new Date(w.start);if(d>=pwStart&&d<lwStart)pv+=w.volume||0;});
+  var delta=pv?Math.round((vol-pv)/pv*100):null, dcount=Object.keys(days).length;
+  var line = prs?(prs+' new PR'+(prs>1?'s':'')+' last week — you\'re getting stronger.'):(delta!=null&&delta>0?('Volume up '+delta+'% on the week — keep it rolling.'):'Another week in the books — consistency wins.');
+  return '<div class="card" style="border-color:var(--acc)"><div class="row" style="justify-content:space-between;align-items:center;margin-bottom:12px"><b style="font-size:16px">Last week in review</b><button class="iconbtn" style="width:28px;height:28px" onclick="dismissRecap()" aria-label="Dismiss">'+icon('x')+'</button></div>'+
+    '<div class="recapstats"><div><b>'+lw.length+'</b><span>sessions</span></div><div><b>'+fmtVol(vol)+'</b><span>volume</span></div><div><b>'+prs+'</b><span>PRs</span></div><div><b>'+dcount+'/'+(S.weekGoal||4)+'</b><span>days</span></div></div>'+
+    '<div class="sub" style="margin:11px 0 0">'+esc(line)+'</div></div>';
+}
+function dismissRecap(){ S.lastRecapWeek=monday(new Date()).toISOString(); save(); render(); }
 function premiumTeaser(title,desc){
   return '<div class="card tap" onclick="upgradeSheet()" style="border-style:dashed"><div class="row"><span class="qi" style="background:rgba(245,192,68,.14);color:var(--gold)">'+icon('trophy')+'</span><div class="grow"><b>'+esc(title)+' <span class="pill-pro">PRO</span></b><div class="sub" style="margin:3px 0 0">'+esc(desc)+'</div></div><span style="color:var(--mut)">›</span></div></div>';
 }
@@ -2537,7 +2560,7 @@ var SUPA_URL='https://dshtcziqomrqvszxbmpc.supabase.co';
 var SUPA_KEY='sb_publishable_zyiFZEfB5adfUhcFxtCESQ_0ashFhvg';
 var SB=(window.supabase&&SUPA_URL)?window.supabase.createClient(SUPA_URL,SUPA_KEY):null;
 function hasCloud(){ return !!SB; }
-var SYNC_KEYS=['name','bio','avatar','sex','dob','heightCm','level','goal','weekGoal','bodyLog','readiness','unit','restDefault','customExercises','routines','workouts','sampleDismissed','purchased','trialStart','feedbackGiven','onboarded'];
+var SYNC_KEYS=['name','bio','avatar','sex','dob','heightCm','level','goal','weekGoal','bodyLog','readiness','unit','restDefault','customExercises','routines','workouts','sampleDismissed','purchased','trialStart','feedbackGiven','onboarded','lastRecapWeek'];
 function syncState(){ var o={}; SYNC_KEYS.forEach(function(k){o[k]=S[k];}); return o; }
 function applyState(st){ if(!st)return; SYNC_KEYS.forEach(function(k){ if(st[k]!==undefined)S[k]=st[k]; }); }
 var _syncStatus='',_syncT=null;
