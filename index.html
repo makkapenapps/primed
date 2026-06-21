@@ -116,6 +116,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
 .frow select.ctl,.kvrow select.ctl{text-align:left;text-align-last:left}
 .frow input.ctl,.frow input.ctl::placeholder{text-align:left}
 .frow button.ctl,.kvrow button.ctl{display:flex;align-items:center;justify-content:flex-start}
+.frow button.btn.ctl:not(.ghost):not(.soft):not(.danger),.kvrow button.btn.ctl:not(.ghost):not(.soft):not(.danger){color:var(--accText);justify-content:center}
 .avchg{display:flex;align-items:center;gap:10px;flex:none;cursor:pointer}
 .avchg .chev{color:var(--mut);font-size:14px;font-weight:600;white-space:nowrap}
 .rdhero{display:flex;align-items:center;gap:16px}
@@ -2121,13 +2122,13 @@ function exerciseBlock(mode,e,i){
   var cols= mode==='w' ? (t==='wr'?'cols-wr':t==='reps'?'cols-r':'cols-t') : (t==='wr'?'cols-wr-n':t==='reps'?'cols-r-n':'cols-t-n');
   var prev=mode==='w'?prevSets(e.exId):null;
   var list=ctxList(mode);
-  var prevLink=!!(i>0&&list[i-1]&&list[i-1].ssNext), nextLink=!!(e.ssNext&&list[i+1]);
+  var prevLink=_ssLink(list[i-1],e), nextLink=_ssLink(e,list[i+1]);
   var cls='card exblock'+((prevLink||nextLink)?' ss':'')+(nextLink&&!prevLink?' ss-top':'')+(prevLink&&nextLink?' ss-mid':'')+(prevLink&&!nextLink?' ss-bot':'');
   var h='<div class="'+cls+'" data-i="'+i+'">';
   if(nextLink&&!prevLink)h+='<div class="sstag">'+icon('link')+'Superset</div>';
   h+='<div class="exhead"><div class="avatar" style="width:34px;height:34px;font-size:14px">'+esc(def.name[0])+'</div>'+
     '<span class="t grow" onclick="pushScreenSafe(\''+def.id+'\')">'+esc(def.name)+'</span>'+
-    (i<list.length-1?'<button class="iconbtn exlink'+(e.ssNext?' on':'')+'" style="width:30px;height:30px" onclick="toggleSuperset(\''+mode+'\','+i+')" aria-label="Superset with exercise below" title="Superset with exercise below">'+icon('link')+'</button>':'')+
+    (i<list.length-1?'<button class="iconbtn exlink'+(_ssLink(e,list[i+1])?' on':'')+'" style="width:30px;height:30px" onclick="toggleSuperset(\''+mode+'\','+i+')" aria-label="Superset with exercise below" title="Superset with exercise below">'+icon('link')+'</button>':'')+
     (mode==='w'?'<span class="exgrip" aria-label="Drag to reorder" title="Drag to reorder">'+icon('grip')+'</span>':'')+
     '<button class="iconbtn" style="width:30px;height:30px" onclick="removeEx(\''+mode+'\','+i+')" aria-label="Remove exercise">'+icon('x')+'</button></div>';
   if(e.note)h+='<div class="exnote">'+esc(e.note)+'</div>';
@@ -2164,6 +2165,8 @@ function exerciseBlock(mode,e,i){
   return h;
 }
 function pushScreenSafe(id){ if(woOpen){woOpen=false;} pushScreen('exDetail',id); }
+function _ssNote(x){ return !!(x&&/superset/i.test(x.note||'')); }
+function _ssLink(a,b){ return !!(a&&b&&(a.ssNext || (_ssNote(a)&&_ssNote(b)))); }   /* a is supersetted with the next exercise b */
 function ctxList(mode){ return mode==='w'?(S.active?S.active.exercises:[]):(draft?draft.exercises:[]); }
 function toggleSuperset(mode,i){ var l=ctxList(mode); if(!l[i]||i>=l.length-1)return; l[i].ssNext=!l[i].ssNext; ctxRender(mode); toast(l[i].ssNext?'Superset — alternate sets, then rest':'Superset removed'); }
 function ctxRender(mode){ if(mode==='w')renderOverlay(); else render(); save(); }
@@ -2212,7 +2215,7 @@ function toggleDone(i,j,btn){
     if(!s.time){ flagBad(btn); return; }
   }
   s.done=true; save(); renderOverlay();
-  if(ex.ssNext){ var nx=S.active.exercises[i+1]; if(nx)toast('Superset — now do '+exDef(nx.exId).name); }   /* no rest between superset moves */
+  if(_ssLink(ex,S.active.exercises[i+1])){ var nx=S.active.exercises[i+1]; if(nx)toast('Superset — now do '+exDef(nx.exId).name); }   /* no rest between superset moves */
   else if(S.restDefault>0)startRest(S.restDefault);
 }
 function flagBad(btn){
@@ -2313,18 +2316,18 @@ function avatarHtml(px,fs){
 }
 var AV_EMOJIS=['💪','🏋️','🔥','⚡','🦁','🐆','🐺','🦋','🌸','🌙','⭐','💎','🚀','🏆','🥇','🍑','🍀','🌊','👑','😤'];
 var AV_GRADS=[
- ['#c9ff2e','#13c296'],['#ff6cab','#7366ff'],['#ffa62e','#ea4d2c'],['#5b2eff','#7dd3fc'],
- ['#f093fb','#f5576c'],['#43e97b','#38f9d7'],['#fa709a','#fee140'],['#30cfd0','#330867'],
- ['#fbc2eb','#a18cd1'],['#0ba360','#3cba92'],['#ff7b54','#e0218a'],['#334155','#94a3b8'],
- ['#23272e','#23272e'],['#4b5563','#4b5563'],['#9ca3af','#9ca3af'],
- ['#b8b0a4','#b8b0a4'],['#e6e2da','#e6e2da'],['#f4f4f2','#f4f4f2']];
+ ['#c9ff2e','#7aa800'],['#3ddc84','#1f9d57'],['#2dd4bf','#0e7490'],['#60a5fa','#2563eb'],
+ ['#a78bfa','#6d28d9'],['#fb7185','#be123c'],['#fbbf24','#d97706'],['#475569','#1e293b'],
+ ['#27303f','#12161f'],['#0f140b','#0a0c08'],['#64748b','#475569'],['#9ca3af','#6b7280'],
+ ['#cbd5c0','#a7b39a'],['#b8b0a4','#8a8276'],['#e6e2da','#c9c3b6'],['#f4f4f2','#ded8cc']];
 function lumHex(hex){var c=parseInt(hex.slice(1),16);return ((c>>16&255)*0.299+((c>>8)&255)*0.587+(c&255)*0.114)/255;}
 function editProfile(){ setSec='profile'; pushScreen('settings'); }
 function avatarSheet(){ sheet(editProfileHtml(),true); }
 function editProfileHtml(){
   var a=S.avatar||{};
-  var h='<h3>Avatar</h3><div class="sheetbody">';
-  h+='<div class="row" style="justify-content:center;margin:4px 0 14px">'+avatarHtml(84,32)+'</div>';
+  var h='<h3>Avatar</h3>';
+  h+='<div class="row" style="justify-content:center;margin:2px 0 16px">'+avatarHtml(76,30)+'</div>';
+  h+='<div class="sheetbody">';
   h+='<label class="f">Style</label><div class="row" style="flex-wrap:wrap;gap:8px">'+
     '<button class="chip'+(a.type==='photo'?' on':'')+'" onclick="document.getElementById(\'avphoto\').click()">'+icon('camera')+'Upload photo</button>'+
     (a.photo&&a.type!=='photo'?'<button class="chip" onclick="avUsePhoto()">Use my photo</button>':'')+
