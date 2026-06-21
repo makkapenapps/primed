@@ -362,6 +362,18 @@ label.f{display:block;font-size:12px;font-weight:700;color:var(--mut);margin:12p
 .autherr.show{display:block}
 .authguest{color:var(--acc);font-weight:700;font-size:14px;margin-top:18px;cursor:pointer}
 .authnote{font-size:12px;color:var(--mut);margin-top:18px;line-height:1.5}
+/* onboarding */
+.obprog{display:flex;gap:7px;justify-content:center;margin:14px 0 2px}
+.obprog span{width:34px;height:4px;border-radius:2px;background:var(--card2)}
+.obprog span.on{background:var(--acc)}
+.obopts{display:flex;flex-direction:column;gap:11px;margin-top:20px}
+.obopt{display:flex;align-items:center;gap:13px;background:var(--card);border:1.5px solid var(--line);border-radius:15px;padding:16px;cursor:pointer}
+.obopt.sel{border-color:var(--acc)}
+.obopt b{font-size:16px}
+.obopt .qi{flex:none}
+.obopt .grow{min-width:0}
+.obcheck{flex:none;opacity:0;color:var(--acc)}
+.obopt.sel .obcheck{opacity:1}
 /* ============ responsive: tablet & desktop ============ */
 .tablbl,.navbrand,.navonly{display:none}
 #tabbar.navhide{display:none}
@@ -871,13 +883,14 @@ function planById(id){for(var i=0;i<PLANS.length;i++)if(PLANS[i].id===id)return 
 /* ================= state ================= */
 var KEY='ironlog.v1';   /* storage key kept across the Primed rebrand — renaming it would wipe existing installs */
 var S=load();
-function defaults(){return {name:'Athlete',bio:'',avatar:null,account:null,signedIn:false,stateUpdatedAt:0,wearable:null,purchased:false,trialStart:null,feedbackGiven:false,_bonusDays:0,notifications:false,sex:'',dob:'',heightCm:null,level:'',goal:'',weekGoal:4,bodyLog:[],readiness:[],unit:'kg',theme:'dark',restDefault:90,customExercises:[],routines:[],workouts:[],active:null,sampleDismissed:false};}
+function defaults(){return {name:'Athlete',bio:'',avatar:null,account:null,signedIn:false,stateUpdatedAt:0,wearable:null,purchased:false,trialStart:null,feedbackGiven:false,_bonusDays:0,onboarded:false,notifications:false,sex:'',dob:'',heightCm:null,level:'',goal:'',weekGoal:4,bodyLog:[],readiness:[],unit:'kg',theme:'dark',restDefault:90,customExercises:[],routines:[],workouts:[],active:null,sampleDismissed:false};}
 function load(){
   try{var raw=localStorage.getItem(KEY); if(!raw) return defaults();
     var d=JSON.parse(raw); var base=defaults();
     var existed=(d.workouts&&d.workouts.length)||!!d.avatar||(d.name&&d.name!=='Athlete')||d.sampleDismissed;
     for(var k in base){ if(d[k]===undefined) d[k]=base[k]; }
     if(d.account==null && existed) d.signedIn=true;
+    if(existed) d.onboarded=true;   /* existing users skip onboarding */
     return d;
   }catch(e){ return defaults(); }
 }
@@ -2517,7 +2530,7 @@ var SUPA_URL='https://dshtcziqomrqvszxbmpc.supabase.co';
 var SUPA_KEY='sb_publishable_zyiFZEfB5adfUhcFxtCESQ_0ashFhvg';
 var SB=(window.supabase&&SUPA_URL)?window.supabase.createClient(SUPA_URL,SUPA_KEY):null;
 function hasCloud(){ return !!SB; }
-var SYNC_KEYS=['name','bio','avatar','sex','dob','heightCm','level','goal','weekGoal','bodyLog','readiness','unit','restDefault','customExercises','routines','workouts','sampleDismissed','purchased','trialStart','feedbackGiven'];
+var SYNC_KEYS=['name','bio','avatar','sex','dob','heightCm','level','goal','weekGoal','bodyLog','readiness','unit','restDefault','customExercises','routines','workouts','sampleDismissed','purchased','trialStart','feedbackGiven','onboarded'];
 function syncState(){ var o={}; SYNC_KEYS.forEach(function(k){o[k]=S[k];}); return o; }
 function applyState(st){ if(!st)return; SYNC_KEYS.forEach(function(k){ if(st[k]!==undefined)S[k]=st[k]; }); }
 var _syncStatus='',_syncT=null;
@@ -2759,6 +2772,60 @@ function checkinPull(){
   toast('Filled from '+wearableLabel(S.wearable));
 }
 function hashStr(s){var h=5381;for(var i=0;i<s.length;i++){h=((h<<5)+h+s.charCodeAt(i))|0;}return (h>>>0).toString(36);}
+/* ---- first-run onboarding: goal → experience → days → auto-build a starter plan ---- */
+var _ob={step:0,goal:null,level:null,days:null};
+function _starterPick(muscle,used){
+  var list=exAll().filter(function(e){return e.muscle===muscle && used.indexOf(e.id)<0;});
+  var order={Barbell:0,Dumbbell:1,Machine:2,Cable:2,Bodyweight:3};
+  list.sort(function(a,b){ return (order[a.equip]==null?4:order[a.equip])-(order[b.equip]==null?4:order[b.equip]); });
+  return list[0]?list[0].id:null;
+}
+function buildStarterRoutines(goal,level,days){
+  var sets=(goal==='Gain strength'&&level!=='Beginner')?4:3;
+  var reps=goal==='Gain strength'?5:goal==='Lose fat'?12:goal==='Improve endurance'?15:10;
+  function mkEx(m,used){ var id=_starterPick(m,used); if(!id)return null; used.push(id); var ss=[]; for(var k=0;k<sets;k++)ss.push({type:'N',weight:null,reps:reps,time:null,done:false}); return {exId:id,note:null,ssNext:false,sets:ss}; }
+  function mk(name,muscles){ var used=[],exs=[]; muscles.forEach(function(m){ var e=mkEx(m,used); if(e)exs.push(e); }); return {id:uid(),name:name,exercises:exs}; }
+  if(days>=5)return [mk('Push',['Chest','Chest','Shoulders','Triceps']),mk('Pull',['Back','Back','Biceps','Forearms']),mk('Legs',['Quadriceps','Hamstrings','Glutes','Calves'])];
+  if(days===4)return [mk('Upper Body',['Chest','Back','Shoulders','Biceps','Triceps']),mk('Lower Body',['Quadriceps','Hamstrings','Glutes','Calves','Core'])];
+  return [mk('Full Body',['Chest','Back','Quadriceps','Shoulders','Biceps','Core'])];
+}
+function renderOnboard(){ $('#screen').innerHTML=onboardHtml(); $('#screen').scrollTop=0; }
+function obNext(){ _ob.step++; renderOnboard(); }
+function obBack(){ if(_ob.step>0){_ob.step--; renderOnboard();} }
+function obPick(field,val){ _ob[field]=val; if(_ob.step<3){ _ob.step++; renderOnboard(); } else obFinish(); }
+function obSkip(){ S.onboarded=true; S._dirty=true; save(); tab='home'; render(); }
+function obFinish(){
+  if(_ob.goal)S.goal=_ob.goal; if(_ob.level)S.level=_ob.level; if(_ob.days)S.weekGoal=_ob.days;
+  var rs=buildStarterRoutines(_ob.goal||'Build muscle',_ob.level||'Beginner',_ob.days||3);
+  S.routines=rs.concat(S.routines||[]);
+  S.onboarded=true; S._dirty=true; save(); tab='home'; stack=[]; render();
+  toast('You\'re all set — your starter '+(rs.length>1?'routines are':'routine is')+' ready');
+}
+function obStep(title,field,opts){
+  var h='<div class="h1" style="margin-top:5vh">'+title+'</div><div class="obopts">';
+  opts.forEach(function(o){ var val=o[0], sel=_ob[field]===val, arg=(typeof val==='number')?val:('\''+val+'\'');
+    h+='<div class="obopt'+(sel?' sel':'')+'" onclick="obPick(\''+field+'\','+arg+')">'+(o[1]?'<span class="qi">'+icon(o[1])+'</span>':'')+'<span class="grow"><b>'+esc(field==='days'?(val+' days a week'):String(val))+'</b>'+(o[2]?'<div class="sub" style="margin:2px 0 0">'+o[2]+'</div>':'')+'</span><span class="obcheck">'+icon('check')+'</span></div>'; });
+  h+='</div><div class="authnote" style="cursor:pointer" onclick="obBack()">‹ Back</div>';
+  return h;
+}
+function onboardHtml(){
+  var s=_ob.step, h='<div class="scr" style="max-width:460px;margin:0 auto">';
+  if(s>=1&&s<=3)h+='<div class="obprog">'+[1,2,3].map(function(n){return '<span class="'+(n<=s?'on':'')+'"></span>';}).join('')+'</div>';
+  if(s===0){
+    h+='<div style="text-align:center;margin-top:9vh"><div class="authlogo">'+brandSvg()+'</div>'+
+      '<div class="authname">Welcome'+(S.name&&S.name!=='Athlete'?', '+esc(S.name.split(' ')[0]):'')+'</div>'+
+      '<div class="authtag" style="margin-top:10px">Primed isn\'t just a logger — it reads your recovery and tells you how hard to train today. Let\'s build your plan in 30 seconds.</div>'+
+      '<button class="btn" style="margin-top:30px" onclick="obNext()">Get started</button>'+
+      '<div class="authnote" style="cursor:pointer" onclick="obSkip()">Skip for now</div></div>';
+  } else if(s===1){
+    h+=obStep('What\'s your main goal?','goal',[['Build muscle','dumb'],['Gain strength','up'],['Lose fat','pulse'],['General fitness','spark2']]);
+  } else if(s===2){
+    h+=obStep('How experienced are you?','level',[['Beginner','',"New to lifting or back after a long break"],['Intermediate','',"Training consistently for 6+ months"],['Advanced','',"Years of structured training"]]);
+  } else if(s===3){
+    h+=obStep('How many days a week can you train?','days',[[3,''],[4,''],[5,'']]);
+  }
+  return h+'</div>';
+}
 function authHtml(){
   if(authMode===null)authMode=S.account?'in':'up';
   var up=authMode==='up';
@@ -2818,6 +2885,7 @@ function render(){
   var tcm=document.querySelector('meta[name=theme-color]'); if(tcm)tcm.setAttribute('content',S.theme==='light'?'#f7f4f0':'#0a0c08');
   var appEl=document.getElementById('app');
   if(!S.signedIn){ appEl.classList.add('authing'); $('#screen').innerHTML=authHtml(); $('#screen').scrollTop=0; return; }
+  if(!S.onboarded){ appEl.classList.add('authing'); $('#screen').innerHTML=onboardHtml(); $('#screen').scrollTop=0; return; }
   appEl.classList.remove('authing');
   var top=stack.length?stack[stack.length-1]:null, html='';
   if(top){
