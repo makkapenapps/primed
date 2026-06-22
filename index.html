@@ -2589,12 +2589,17 @@ function pullAndApply(){
     setSyncStatus('synced');
   });
 }
-/* server-granted trial bonus (read-only to the client; the app can never grant it itself) */
+/* server-controlled trial bonus + Stripe subscription (read-only to the client; only the
+   server/webhook can grant either — the app can never set them itself) */
 function refreshBonus(){
   if(!(SB&&S._uid))return;
-  SB.from('profiles').select('trial_bonus_days').eq('id',S._uid).maybeSingle().then(function(r){
-    var b=(r&&r.data&&r.data.trial_bonus_days)||0;
-    if(b!==(S._bonusDays||0)){ S._bonusDays=b; persist(); render(); }
+  SB.from('profiles').select('trial_bonus_days,subscription_status').eq('id',S._uid).maybeSingle().then(function(r){
+    var d=(r&&r.data)||{}; var changed=false;
+    var b=d.trial_bonus_days||0;
+    if(b!==(S._bonusDays||0)){ S._bonusDays=b; changed=true; }
+    var sub=(d.subscription_status==='active'||d.subscription_status==='trialing');
+    if(sub!==!!S.purchased){ S.purchased=sub; changed=true; }
+    if(changed){ persist(); render(); }
   }).catch(function(){});
 }
 function syncOnLaunch(){
@@ -2650,7 +2655,15 @@ function buyLifetime(){
     }).catch(function(){ toast('Could not load pricing — check your connection'); });
     return;
   }
-  unlockLifetime();   /* web/preview: mock the purchase so the whole flow is testable */
+  /* web: real Stripe Checkout — create a session server-side, then redirect to Stripe's hosted page */
+  if(!(SB&&S._uid)){ toast('Please sign in to subscribe'); return; }
+  toast('Opening secure checkout…');
+  SB.auth.getSession().then(function(r){
+    var token=r&&r.data&&r.data.session&&r.data.session.access_token;
+    return fetch(SUPA_URL+'/functions/v1/stripe-checkout',{method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'}});
+  }).then(function(res){ return res.json(); }).then(function(d){
+    if(d&&d.url){ window.location.href=d.url; } else { toast('Checkout isn\'t available right now'); }
+  }).catch(function(){ toast('Could not start checkout — try again'); });
 }
 function restoreLifetime(){
   if(Purchases){ Purchases.restorePurchases().then(function(res){ if(_hasLifetime(res&&res.customerInfo))unlockLifetime(); else toast('Nothing to restore'); }).catch(function(){ toast('Could not restore'); }); return; }
@@ -3094,6 +3107,12 @@ render();
 ensureTrialStarted();    /* start the 14-day trial clock for signed-in users who don't have one yet */
 syncOnLaunch();
 nativeInitPurchases();   /* RevenueCat subscription entitlement → S.purchased (no-op on web) */
+/* returning from Stripe Checkout — the webhook can lag a couple seconds, so poll a few times */
+(function(){ var q=location.search||'';
+  if(q.indexOf('checkout=success')>-1){ toast('Payment received — activating your subscription…');
+    var n=0, iv=setInterval(function(){ n++; refreshBonus(); if(S.purchased||n>=6)clearInterval(iv); },2500); }
+  if(q.indexOf('checkout=')>-1&&history.replaceState)history.replaceState(null,'',location.pathname);
+})();
 checkStaleWorkout();     /* ask if a workout was left running */
 document.addEventListener('visibilitychange',function(){
   if(document.hidden){ _staleAsked=false; } else { checkStaleWorkout(); }
