@@ -2112,9 +2112,9 @@ function deleteRoutine(id){ closeSheet(); confirmSheet('Delete this routine? Thi
 function autoName(){ var hh=new Date().getHours(); return hh<12?'Morning Workout':hh<17?'Afternoon Workout':'Evening Workout'; }
 function startEmpty(){ startWorkout({name:autoName(),exercises:[]}); }
 function startRoutine(id){ var r=null;S.routines.forEach(function(x){if(x.id===id)r=x;}); if(!r)return;
-  startWorkout({name:r.name,exercises:r.exercises.map(function(e){return {exId:e.exId,note:e.note||null,ssNext:e.ssNext||false,sets:e.sets.map(function(s){return {type:s.type||'N',weight:s.weight!=null?s.weight:null,reps:s.reps!=null?s.reps:null,time:s.time!=null?s.time:null,done:false};})};})}); }
+  startWorkout({name:r.name,exercises:r.exercises.map(function(e){return {exId:e.exId,note:e.note||null,ssNext:e.ssNext||false,ssBreak:e.ssBreak||false,sets:e.sets.map(function(s){return {type:s.type||'N',weight:s.weight!=null?s.weight:null,reps:s.reps!=null?s.reps:null,time:s.time!=null?s.time:null,done:false};})};})}); }
 function repeatWorkout(id){ var w=null;S.workouts.forEach(function(x){if(x.id===id)w=x;}); if(!w)return;
-  startWorkout({name:w.name,exercises:w.exercises.map(function(e){return {exId:e.exId,note:e.note||null,ssNext:e.ssNext||false,sets:e.sets.map(function(s){return {type:s.type,weight:s.weight,reps:s.reps,time:s.time,done:false};})};})}); }
+  startWorkout({name:w.name,exercises:w.exercises.map(function(e){return {exId:e.exId,note:e.note||null,ssNext:e.ssNext||false,ssBreak:e.ssBreak||false,sets:e.sets.map(function(s){return {type:s.type,weight:s.weight,reps:s.reps,time:s.time,done:false};})};})}); }
 function startWorkout(tpl){
   if(accessState()==='readonly'){ trialEndedSheet(); return; }
   if(S.active){ confirmSheet('A workout is already in progress. Discard it and start a new one?',function(){ S.active=null; save(); startWorkout(tpl); }); return; }
@@ -2357,9 +2357,13 @@ function exerciseBlock(mode,e,i){
 }
 function pushScreenSafe(id){ if(woOpen){woOpen=false;} pushScreen('exDetail',id); }
 function _ssNote(x){ return !!(x&&/superset/i.test(x.note||'')); }
-function _ssLink(a,b){ return !!(a&&b&&(a.ssNext || (_ssNote(a)&&_ssNote(b)))); }   /* a is supersetted with the next exercise b */
+function _ssLink(a,b){ return !!(a&&b&&!a.ssBreak&&(a.ssNext || (_ssNote(a)&&_ssNote(b)))); }   /* a is supersetted with the next exercise b — ssBreak forces a manual disconnect */
 function ctxList(mode){ return mode==='w'?(S.active?S.active.exercises:[]):(draft?draft.exercises:[]); }
-function toggleSuperset(mode,i){ var l=ctxList(mode); if(!l[i]||i>=l.length-1)return; l[i].ssNext=!l[i].ssNext; ctxRender(mode); toast(l[i].ssNext?'Superset — alternate sets, then rest':'Superset removed'); }
+function toggleSuperset(mode,i){ var l=ctxList(mode); if(!l[i]||i>=l.length-1)return;
+  var linked=_ssLink(l[i],l[i+1]);
+  if(linked){ l[i].ssNext=false; l[i].ssBreak=true; }   /* disconnect even if it came from a plan note */
+  else { l[i].ssNext=true; l[i].ssBreak=false; }
+  ctxRender(mode); toast(linked?'Superset removed':'Superset — alternate sets, then rest'); }
 function ctxRender(mode){ if(mode==='w')renderOverlay(); else render(); save(); }
 function addSet(mode,i){
   var ex=ctxList(mode)[i]; if(!ex)return;
