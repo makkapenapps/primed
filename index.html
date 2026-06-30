@@ -60,7 +60,7 @@ body{font-family:'Figtree',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,He
 .h1{font-size:27px;font-weight:600;margin:2px 0 2px;letter-spacing:-.5px}
 .sub{color:var(--mut);font-size:13px;margin-bottom:16px;line-height:1.5}
 .sec{font-size:13px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin:28px 0 10px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px}
+.card{background:transparent;border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px}
 .card.tap{cursor:pointer}
 .card.tap:active{transform:scale(.99)}
 .row{display:flex;align-items:center;gap:10px}
@@ -1957,10 +1957,14 @@ function profileHtml(){
   var h='<div class="scr"><div class="row" style="margin-bottom:14px">'+avatarHtml(56,22)+
     '<div class="grow"><div class="h1" style="margin:0">'+esc(S.name)+'</div><div class="sub" style="margin:0">'+(S.bio?esc(S.bio):S.workouts.length+' workouts')+'</div></div>'+
     '<button class="iconbtn" onclick="pushScreen(\'settings\')" aria-label="Settings">'+icon('sliders')+'</button></div>';
-  h+='<div class="card"><div class="row">'+
-     '<div class="stat"><b>'+S.workouts.length+'</b><span>Workouts</span></div>'+
-     '<div class="stat"><b>'+fmtVol(tw)+'</b><span>Volume</span></div>'+
-     '<div class="stat"><b>'+fmtDur(tt)+'</b><span>Time</span></div></div></div>';
+  h+='<div class="pstats" style="margin:6px 0 4px">'+
+     '<div class="pst"><div class="pstatv" style="font-size:18px;white-space:nowrap">'+S.workouts.length+'</div><div class="pstatl">workouts</div></div>'+
+     '<div class="psep"></div>'+
+     '<div class="pst"><div class="pstatv" style="font-size:18px;white-space:nowrap">'+fmtVol(tw)+'</div><div class="pstatl">volume</div></div>'+
+     '<div class="psep"></div>'+
+     '<div class="pst"><div class="pstatv" style="font-size:18px;white-space:nowrap">'+fmtDur(tt)+'</div><div class="pstatl">time</div></div>'+
+     '</div>'+
+     '<div style="height:1px;background:linear-gradient(90deg,transparent 2%,var(--line) 18%,var(--line) 82%,transparent 98%);margin:18px 0 0"></div>';
   /* about me — fitness profile */
   var fit=[],age=ageFrom(S.dob);
   if(age!=null)fit.push(['Age',age]);
