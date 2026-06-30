@@ -273,6 +273,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
 .pstatl{font-size:11px;color:var(--mut);margin-top:4px}
 .prow{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
 .prow:last-child{border-bottom:none}
+.psheet{border:1px solid var(--line);border-radius:20px;padding:2px 18px;margin-bottom:16px}
+.psheet>.pcard{border:none;border-radius:0;margin:0!important;padding:18px 0;border-bottom:1px solid var(--line);background:transparent}
+.psheet>.pcard:last-child{border-bottom:none}
+.playbtn{width:46px;height:46px;border-radius:50%;background:var(--acc);color:var(--accText);border:none;display:flex;align-items:center;justify-content:center;flex:none;cursor:pointer}
+.playbtn svg{width:20px;height:20px}
 .sheet h3{margin:0 0 12px;font-size:17px}
 .sheetbody{overflow-y:auto;flex:1}
 .menuitem{display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid var(--line);font-weight:600;font-size:15px;cursor:pointer;background:none;border-left:none;border-right:none;border-top:none;width:100%;color:var(--text);font-family:inherit;text-align:left}
@@ -1423,7 +1428,7 @@ function readinessCard(){
       '<div class="phero">'+thinRing(r.score,r.color,86)+
         '<div class="grow"><div style="font-size:16px;font-weight:800;color:var(--text)">'+headline+'</div>'+
         '<div style="font-size:12.5px;color:var(--mut);line-height:1.5;margin-top:4px">'+r.advice+'</div>'+
-        (chips.length?'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">'+chips.map(function(c){return '<span class="pchip">'+esc(c)+'</span>';}).join('')+'</div>':'')+
+        (chips.length?'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">'+chips.slice(0,3).map(function(c){return '<span class="pchip">'+esc(c)+'</span>';}).join('')+'</div>':'')+
         confHtml+
       '</div></div>'+buildHtml+'</div>';
   }
@@ -1630,14 +1635,15 @@ function homeHtml(){
   var greet=hr<12?'Good morning':hr<18?'Good afternoon':'Good evening';
   var now=new Date(), dn=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][now.getDay()],
       mn=['January','February','March','April','May','June','July','August','September','October','November','December'][now.getMonth()];
-  var h='<div class="scr"><div class="row" style="margin-bottom:14px"><span onclick="setTab(\'profile\')" style="cursor:pointer">'+avatarHtml(46,18)+'</span>'+
-    '<div class="grow"><div style="font-size:20px;font-weight:800">'+greet+', '+esc(S.name)+'</div><div class="sub" style="margin:1px 0 0">'+dn+', '+now.getDate()+' '+mn+'</div></div></div>';
+  var h='<div class="scr">';
   h+=trialCard();
   h+=weeklyRecapCard();
   if(S.active){
     h+='<div class="card tap" onclick="woOpen=true;render()" style="border-color:var(--green)"><div class="row"><div class="grow"><b>Workout in progress</b><div class="sub" style="margin:2px 0 0">'+esc(S.active.name)+' — tap to resume</div></div><span style="color:var(--green);font-weight:800" id="homeclock">'+fmtClock((Date.now()-new Date(S.active.start))/1000)+'</span></div></div>';
   }
-  /* readiness hero */
+  /* unified dashboard sheet */
+  h+='<div class="psheet">';
+  h+='<div class="pcard"><div class="row" style="align-items:flex-start"><div class="grow"><div class="plabel">'+dn.slice(0,3).toUpperCase()+' · '+now.getDate()+' '+mn.slice(0,3).toUpperCase()+'</div><div style="font-size:21px;font-weight:800;letter-spacing:-.3px;margin-top:4px">'+greet+', '+esc(S.name)+'</div></div><span onclick="setTab(\'profile\')" style="cursor:pointer;flex:none">'+avatarHtml(40,16)+'</span></div></div>';
   h+=readinessCard();
   /* this week vs last week */
   var pStart=monday(new Date(Date.now()-7*86400000)), pEnd=monday(new Date());
@@ -1688,15 +1694,10 @@ function homeHtml(){
           '<span style="font-size:12.5px;font-weight:600;color:var(--mut)">Readiness '+rr.score+' · '+rr.label+' — '+rr.cue+'</span></div>';
       }
     }
-    var startBtns=(band&&band.key==='deload')
-      ? '<div class="row"><button class="btn small" style="flex:1" onclick="startRoutineLighter(\''+nr.id+'\')">Start lighter</button>'+
-        '<button class="btn small ghost" style="flex:1" onclick="startRoutine(\''+nr.id+'\')">As planned</button></div>'
-      : '<div class="row"><button class="btn small" style="flex:1" onclick="startRoutine(\''+nr.id+'\')">Start Routine</button>'+
-        '<button class="btn small ghost" style="flex:1" onclick="setTab(\'workout\')">All routines</button></div>';
-    h+='<div class="pcard" style="margin-bottom:16px"><div class="plabel" style="margin-bottom:12px">Up next</div><div class="row" style="align-items:flex-start"><div class="grow" style="cursor:pointer;min-width:0" onclick="viewRoutine(\''+nr.id+'\')"><div style="font-size:16px;font-weight:800;color:var(--text)">'+esc(nr.name)+'</div><div style="font-size:12.5px;color:var(--mut);margin:4px 0 '+(rnote?'12px':'16px')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(names)+'</div></div>'+
-       '<button class="iconbtn" onclick="viewRoutine(\''+nr.id+'\')" aria-label="View routine" style="flex:none">'+icon('eye')+'</button></div>'+rnote+startBtns+'</div>';
+    var lighterLink=(band&&band.key==='deload')?'<div style="margin-top:2px"><span onclick="startRoutineLighter(\''+nr.id+'\')" style="font-size:12.5px;color:var(--acc);font-weight:700;cursor:pointer">Start lighter &rarr;</span></div>':'';
+    h+='<div class="pcard"><div class="plabel" style="margin-bottom:12px">Up next</div><div class="row" style="align-items:flex-start"><div class="grow" style="cursor:pointer;min-width:0" onclick="viewRoutine(\''+nr.id+'\')"><div style="font-size:17px;font-weight:800;color:var(--text)">'+esc(nr.name)+'</div><div style="font-size:12.5px;color:var(--mut);margin:4px 0 '+(rnote?'10px':'0')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(names)+'</div></div>'+
+       '<button class="playbtn" onclick="startRoutine(\''+nr.id+'\')" aria-label="Start routine">'+icon('play')+'</button></div>'+rnote+lighterLink+'</div>';
   }
-  if(!S.active&&S.workouts.length)h+='<button class="btn ghost" onclick="startEmpty()" style="margin-top:'+(nr?'0':'4px')+'">'+icon('plus')+' Start Empty Workout</button>';
   /* recent PRs */
   var prs=recentPRs(4);
   if(prs.length){
@@ -1706,6 +1707,8 @@ function homeHtml(){
     });
     h+='</div>';
   }
+  h+='</div>'; /* close .psheet */
+  if(!S.active&&S.workouts.length)h+='<button class="btn ghost" onclick="startEmpty()" style="margin-bottom:16px">'+icon('plus')+' Start Empty Workout</button>';
   /* last workout */
   var last=S.workouts.length?S.workouts[S.workouts.length-1]:null;
   if(last){
