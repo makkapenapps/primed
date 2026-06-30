@@ -6,6 +6,9 @@
 <meta name="theme-color" content="#0a0c08">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <title>Primed — Gym Workout Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='15' fill='%230a0c08'/><g fill='none' stroke='%23c9ff2e' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'><path d='M21 46 L32 38 L43 46' opacity='.5'/><path d='M21 37 L32 29 L43 37' opacity='.78'/><path d='M21 28 L32 20 L43 28'/></g></svg>">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
@@ -42,7 +45,7 @@ html{-webkit-text-size-adjust:100%}
 button,input,select,textarea{touch-action:manipulation}
 html,body{margin:0;padding:0;background:#000}
 [data-theme="light"] body{background:#d9dde6}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--text)}
+body{font-family:'Figtree',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--text);-webkit-font-smoothing:antialiased;letter-spacing:-.01em}
 #app{position:relative;max-width:430px;height:100dvh;margin:0 auto;background:var(--bg);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 0 60px rgba(0,0,0,.5);padding-top:env(safe-area-inset-top)}
 @media (min-width:480px){
   body{display:flex;align-items:center;justify-content:center;min-height:100dvh;background:radial-gradient(1000px 700px at 50% -5%,#1b2410 0%,#040503 70%)}
@@ -261,7 +264,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
 @keyframes prpop{0%{transform:scale(.7) translateY(8px);opacity:0}10%{transform:scale(1.06);opacity:1}20%{transform:scale(1)}82%{opacity:1;transform:scale(1)}100%{opacity:0;transform:translateY(-10px)}}
 .setrow.pr .stype{background:var(--acc);color:var(--accText);box-shadow:0 0 0 2px var(--accSoft)}
 .pcard{background:transparent;border:1px solid var(--line);border-radius:18px;padding:18px 18px}
-.plabel{font-size:10.5px;font-weight:700;letter-spacing:.15em;color:var(--mut);text-transform:uppercase}
+.plabel{font-size:10.5px;font-weight:600;letter-spacing:.15em;color:var(--mut);text-transform:uppercase}
 .pdiv{height:1px;background:var(--line);margin:17px 0}
 .phero{display:flex;align-items:center;gap:17px}
 .pchip{font-size:10.5px;color:var(--mut);border:1px solid var(--line);padding:2px 9px;border-radius:7px;white-space:nowrap}
@@ -269,7 +272,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
 .pstats>.pst{flex:1}
 .pstats>.pst+.pst{padding-left:15px}
 .pstats .psep{flex:none;width:1px;background:var(--line);margin:2px 0}
-.pstatv{font-size:21px;font-weight:800;letter-spacing:-.5px;font-variant-numeric:tabular-nums;color:var(--text);line-height:1}
+.pstatv{font-size:23px;font-weight:600;letter-spacing:-.5px;font-variant-numeric:tabular-nums;color:var(--text);line-height:1}
 .pstatl{font-size:11px;color:var(--mut);margin-top:4px}
 .prow{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
 .prow:last-child{border-bottom:none}
@@ -1396,7 +1399,7 @@ function thinRing(score,color,size){ size=size||88; var r=size/2-4, c=2*Math.PI*
   return '<div style="position:relative;width:'+size+'px;height:'+size+'px;flex:none"><svg viewBox="0 0 '+size+' '+size+'" style="width:'+size+'px;height:'+size+'px;transform:rotate(-90deg)">'
     +'<circle cx="'+cx+'" cy="'+cx+'" r="'+r+'" fill="none" stroke="var(--card2)" stroke-width="3.5"/>'
     +'<circle cx="'+cx+'" cy="'+cx+'" r="'+r+'" fill="none" stroke="'+color+'" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="'+c.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'"/></svg>'
-    +'<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:'+Math.round(size*0.34)+'px;font-weight:800;color:var(--text);letter-spacing:-1px">'+score+'</div></div>'; }
+    +'<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:'+Math.round(size*0.36)+'px;font-weight:600;color:var(--text);letter-spacing:-1px">'+score+'</div></div>'; }
 var RD_HEADLINE={Primed:'Primed to train',Ready:'Ready to train',Moderate:'Train controlled',Recover:'Recovery day'};
 function gaugeBlock(score,color,sub,size){
   size=size||118; var r=size/2-9, c=2*Math.PI*r, cx=size/2, off=c*(1-rdClamp(score/100));
@@ -1426,8 +1429,8 @@ function readinessCard(){
     return '<div class="pcard tap" style="position:relative;margin-bottom:16px" onclick="pushScreen(\'readiness\')"><button class="infobtn rdinfo" onclick="event.stopPropagation();readinessInfoSheet()" aria-label="About the readiness score">'+icon('info')+'</button>'+
       '<div class="plabel" style="margin-bottom:14px">Readiness</div>'+
       '<div class="phero">'+thinRing(r.score,r.color,86)+
-        '<div class="grow"><div style="font-size:16px;font-weight:800;color:var(--text)">'+headline+'</div>'+
-        '<div style="font-size:12.5px;color:var(--mut);line-height:1.5;margin-top:4px">'+r.advice+'</div>'+
+        '<div class="grow"><div style="font-size:18px;font-weight:600;letter-spacing:-.2px;color:var(--text)">'+headline+'</div>'+
+        '<div style="font-size:12.5px;color:var(--mut);line-height:1.5;margin-top:5px">'+r.advice+'</div>'+
         (chips.length?'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">'+chips.slice(0,3).map(function(c){return '<span class="pchip">'+esc(c)+'</span>';}).join('')+'</div>':'')+
         confHtml+
       '</div></div>'+buildHtml+'</div>';
@@ -1643,7 +1646,7 @@ function homeHtml(){
   }
   /* unified dashboard sheet */
   h+='<div class="psheet">';
-  h+='<div class="pcard"><div class="row" style="align-items:flex-start"><div class="grow"><div class="plabel">'+dn.slice(0,3).toUpperCase()+' · '+now.getDate()+' '+mn.slice(0,3).toUpperCase()+'</div><div style="font-size:21px;font-weight:800;letter-spacing:-.3px;margin-top:4px">'+greet+', '+esc(S.name)+'</div></div><span onclick="setTab(\'profile\')" style="cursor:pointer;flex:none">'+avatarHtml(40,16)+'</span></div></div>';
+  h+='<div class="pcard"><div class="row" style="align-items:flex-start"><div class="grow"><div class="plabel">'+dn.slice(0,3).toUpperCase()+' · '+now.getDate()+' '+mn.slice(0,3).toUpperCase()+'</div><div style="font-size:22px;font-weight:600;letter-spacing:-.4px;margin-top:4px">'+greet+', '+esc(S.name)+'</div></div><span onclick="setTab(\'profile\')" style="cursor:pointer;flex:none">'+avatarHtml(40,16)+'</span></div></div>';
   h+=readinessCard();
   /* this week vs last week */
   var pStart=monday(new Date(Date.now()-7*86400000)), pEnd=monday(new Date());
@@ -1662,7 +1665,7 @@ function homeHtml(){
   var lastSeg=pts.length>1?pts.slice(-2).join(' '):'', lp=(pts[pts.length-1]||'286,50').split(',');
   var goalCol=goalHit?'var(--green)':'var(--gold)';
   h+='<div class="pcard" style="margin-bottom:16px">'+
-     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:15px"><span class="plabel">This week</span><span style="font-size:11px;color:var(--mut)">Goal <b style="color:'+goalCol+';font-weight:800">'+wk.length+' / '+S.weekGoal+'</b></span></div>'+
+     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:15px"><span class="plabel">This week</span><span style="font-size:11px;color:var(--mut)">Goal <b style="color:'+goalCol+';font-weight:600">'+wk.length+' / '+S.weekGoal+'</b></span></div>'+
      '<div class="pstats">'+
        '<div class="pst"><div class="pstatv">'+fmtVol(vol)+'</div><div class="pstatl">volume '+dlt(vol,pv,true)+'</div></div>'+
        '<div class="psep"></div>'+
@@ -1695,7 +1698,7 @@ function homeHtml(){
       }
     }
     var lighterLink=(band&&band.key==='deload')?'<div style="margin-top:2px"><span onclick="startRoutineLighter(\''+nr.id+'\')" style="font-size:12.5px;color:var(--acc);font-weight:700;cursor:pointer">Start lighter &rarr;</span></div>':'';
-    h+='<div class="pcard"><div class="plabel" style="margin-bottom:12px">Up next</div><div class="row" style="align-items:flex-start"><div class="grow" style="cursor:pointer;min-width:0" onclick="viewRoutine(\''+nr.id+'\')"><div style="font-size:17px;font-weight:800;color:var(--text)">'+esc(nr.name)+'</div><div style="font-size:12.5px;color:var(--mut);margin:4px 0 '+(rnote?'10px':'0')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(names)+'</div></div>'+
+    h+='<div class="pcard"><div class="plabel" style="margin-bottom:12px">Up next</div><div class="row" style="align-items:flex-start"><div class="grow" style="cursor:pointer;min-width:0" onclick="viewRoutine(\''+nr.id+'\')"><div style="font-size:18px;font-weight:600;letter-spacing:-.2px;color:var(--text)">'+esc(nr.name)+'</div><div style="font-size:12.5px;color:var(--mut);margin:4px 0 '+(rnote?'10px':'0')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(names)+'</div></div>'+
        '<button class="playbtn" onclick="startRoutine(\''+nr.id+'\')" aria-label="Start routine">'+icon('play')+'</button></div>'+rnote+lighterLink+'</div>';
   }
   /* recent PRs */
