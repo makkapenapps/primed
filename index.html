@@ -296,6 +296,9 @@ select,.tin{background:var(--card2);border:1px solid var(--line);color:var(--tex
 label.f{display:block;font-size:12px;font-weight:700;color:var(--mut);margin:12px 0 6px;text-transform:uppercase;letter-spacing:.04em}
 /* toast */
 #toast{position:absolute;top:14px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--card2);border:1px solid var(--line);color:var(--text);padding:10px 18px;border-radius:999px;font-size:14px;font-weight:600;z-index:60;transition:transform .25s;box-shadow:var(--shadow);white-space:nowrap}
+#undobar{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(16px);background:var(--card2);border:1px solid var(--line);color:var(--text);border-radius:13px;padding:12px 8px 12px 16px;display:flex;align-items:center;gap:14px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;z-index:3000;box-shadow:0 10px 34px rgba(0,0,0,.45);max-width:88%}
+#undobar.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+#undobar button{background:none;border:none;color:var(--acc);font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;padding:4px 10px;flex:none}
 #toast.show{transform:translateX(-50%) translateY(0)}
 /* charts */
 .chart{width:100%;height:auto;display:block}
@@ -1171,6 +1174,14 @@ function fmtDate(iso){ var d=new Date(iso),now=new Date();
 function monthName(iso){ var d=new Date(iso); var mn=['January','February','March','April','May','June','July','August','September','October','November','December']; return mn[d.getMonth()]+' '+d.getFullYear(); }
 function monday(d){ d=new Date(d); var day=(d.getDay()+6)%7; d.setHours(0,0,0,0); d.setDate(d.getDate()-day); return d; }
 function toast(msg){ var t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(function(){t.classList.remove('show');},2200); }
+var _undoFn=null,_undoTimer=null;
+function undoToast(msg,fn){ _undoFn=fn;
+  var el=document.getElementById('undobar');
+  if(!el){ el=document.createElement('div'); el.id='undobar'; document.body.appendChild(el); }
+  el.innerHTML='<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+msg+'</span><button onclick="doUndo()">Undo</button>';
+  el.classList.add('show');
+  clearTimeout(_undoTimer); _undoTimer=setTimeout(function(){ el.classList.remove('show'); _undoFn=null; },5000); }
+function doUndo(){ var el=document.getElementById('undobar'); if(el)el.classList.remove('show'); clearTimeout(_undoTimer); if(_undoFn){ var f=_undoFn; _undoFn=null; f(); } }
 function beep(){ try{ var C=window.AudioContext||window.webkitAudioContext; var ctx=new C();
   [0,0.22].forEach(function(off){ var o=ctx.createOscillator(),g=ctx.createGain();
     o.connect(g); g.connect(ctx.destination); o.frequency.value=880; o.type='sine';
@@ -2464,7 +2475,8 @@ function addSet(mode,i){
   ctxRender(mode);
 }
 function removeEx(mode,i){
-  var l=ctxList(mode); l.splice(i,1); ctxRender(mode);
+  var l=ctxList(mode); var removed=l[i]; if(!removed)return; l.splice(i,1); ctxRender(mode);
+  undoToast(esc(exDef(removed.exId).name)+' removed', function(){ var l2=ctxList(mode); l2.splice(Math.min(i,l2.length),0,removed); ctxRender(mode); toast('Exercise restored'); });
 }
 function cell(mode,i,j,f,el){
   var ex=ctxList(mode)[i]; if(!ex)return; var s=ex.sets[j]; if(!s)return;
@@ -2482,7 +2494,8 @@ function setMenu(mode,i,j){
   sheet(html);
 }
 function applyType(mode,i,j,t){ closeSheet(); var ex=ctxList(mode)[i]; if(!ex)return; ex.sets[j].type=t; ctxRender(mode); }
-function removeSet(mode,i,j){ closeSheet(); var ex=ctxList(mode)[i]; if(!ex)return; ex.sets.splice(j,1); ctxRender(mode); }
+function removeSet(mode,i,j){ closeSheet(); var ex=ctxList(mode)[i]; if(!ex)return; var s=ex.sets[j]; ex.sets.splice(j,1); ctxRender(mode);
+  undoToast('Set removed', function(){ var ex2=ctxList(mode)[i]; if(ex2)ex2.sets.splice(Math.min(j,ex2.sets.length),0,s); ctxRender(mode); }); }
 function toggleDone(i,j,btn){
   var ex=S.active&&S.active.exercises[i]; if(!ex)return; var s=ex.sets[j],def=exDef(ex.exId);
   if(s.done){ s.done=false; save(); renderOverlay(); return; }
