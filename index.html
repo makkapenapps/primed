@@ -120,6 +120,8 @@ body{font-family:'Figtree',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,He
 .frow input.ctl,.frow input.ctl::placeholder{text-align:right}
 .frow input.ctl::placeholder{color:var(--mut)}
 .frow button.ctl,.kvrow button.ctl{display:flex;align-items:center;justify-content:flex-start}
+.frow .btn.ghost.ctl,.kvrow .btn.ghost.ctl{background:none;border:none;box-shadow:none;color:var(--acc);font-weight:600;font-size:14px;height:auto;width:auto;padding:4px 2px;justify-content:flex-end}
+.frow .btn.ghost.ctl:active,.kvrow .btn.ghost.ctl:active{opacity:.6;transform:none}
 .frow button.btn.ctl:not(.ghost):not(.soft):not(.danger),.kvrow button.btn.ctl:not(.ghost):not(.soft):not(.danger){color:var(--accText);justify-content:center}
 .avchg{display:flex;align-items:center;gap:10px;flex:none;cursor:pointer}
 .avchg .chev{color:var(--mut);font-size:14px;font-weight:600;white-space:nowrap}
@@ -2802,7 +2804,7 @@ function setDataTab(){
     h+='<div class="frow"><div class="grow"><span class="fl">Try it — demo</span><div class="sub" style="margin:2px 0 0;font-weight:400">Sample data, see readiness auto-fill</div></div><button class="btn small ghost ctl" onclick="wearableConnect(\'demo\')">Connect demo</button></div>';
   }
   h+='</div>';
-  if(!S.wearable)h+='<div class="sub" style="margin:8px 8px 0;line-height:1.6">One hub, every tracker — Primed reads from Apple Health, so whatever writes there (Apple Watch, Oura, Whoop, Garmin&hellip;) flows straight into your readiness. No separate logins.</div>';
+  if(!S.wearable)h+='<div class="sub" style="margin:10px 2px 0;line-height:1.55">One hub for every tracker — Primed reads from Apple Health, so Apple Watch, Oura, Whoop &amp; Garmin all flow into your readiness.</div>';
   h+='<div class="sec">Backup</div><div class="card" style="padding:4px 16px">';
   h+='<div class="frow"><span class="fl">Export backup</span><button class="btn small ghost ctl" onclick="exportData()">Download</button></div>';
   h+='<div class="frow"><span class="fl">Import backup</span><button class="btn small ghost ctl" onclick="document.getElementById(\'imp-file\').click()">Choose file</button></div>';
